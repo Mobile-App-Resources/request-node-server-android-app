@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">RequestProject</string>
+    <string name="app_url">http://192.168.0.4:9010/api/%s</string>
+    <string name="app_url_2">https://jsonplaceholder.typicode.com/%s</string>
+</resources>
