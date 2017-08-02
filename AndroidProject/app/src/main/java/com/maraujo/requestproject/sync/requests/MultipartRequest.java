@@ -1,13 +1,14 @@
 
 package com.maraujo.requestproject.sync.requests;
 
+import android.util.Log;
+
 import com.android.volley.AuthFailureError;
 import com.android.volley.DefaultRetryPolicy;
 import com.android.volley.Response.ErrorListener;
 import com.android.volley.Response.Listener;
 import com.maraujo.requestproject.sync.requests.toolbox.MultipartBody;
 import com.maraujo.requestproject.sync.requests.toolbox.MultipartBodyOutputStream;
-import com.maraujo.requestproject.utils.LogUtils;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -27,12 +28,12 @@ public class MultipartRequest<T> extends GsonRequest<T> {
 
 	private final MultipartBody body;
 
-	public MultipartRequest(int method, String url, Type clazz, Map<String, String> params, MultipartBody body, Listener<T> listener, ErrorListener errorListener) {
+	public MultipartRequest(int method, String url, Type clazz, Map<String, Object> params, MultipartBody body, Listener<T> listener, ErrorListener errorListener) {
 		super(method, url, clazz, params, null, listener, errorListener);
 
 		this.body = body;
 
-		setRetryPolicy(new DefaultRetryPolicy(MultipartRequest.DEFAULT_TIMEOUT_MS, DefaultRetryPolicy.DEFAULT_MAX_RETRIES, DefaultRetryPolicy.DEFAULT_BACKOFF_MULT));
+		setRetryPolicy(new DefaultRetryPolicy(DEFAULT_TIMEOUT_MS, DEFAULT_RETRIES, DefaultRetryPolicy.DEFAULT_BACKOFF_MULT));
 	}
 
 	@Override
@@ -47,7 +48,7 @@ public class MultipartRequest<T> extends GsonRequest<T> {
 		try {
 			MultipartBodyOutputStream.build(body).writeTo(bos);
 		} catch (IOException e) {
-			LogUtils.logError("MultipartRequest", "IOException writing to ByteArrayOutputStream bos, building the multipart request.");
+			Log.e("MultipartRequest", "IOException writing to ByteArrayOutputStream bos, building the multipart request.");
 		}
 
 		return bos.toByteArray();

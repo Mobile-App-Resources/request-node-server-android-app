@@ -30,8 +30,8 @@ public class FileUtils {
             out.flush();
             out.close();
             return file.getPath();
-        } catch (Exception e) {
-            LogUtils.logError(FileUtils.class.getSimpleName(), e);
+        } catch (Exception ex) {
+            Log.e(FileUtils.class.getSimpleName(), ex.getLocalizedMessage(), ex);
         }
         return null;
     }

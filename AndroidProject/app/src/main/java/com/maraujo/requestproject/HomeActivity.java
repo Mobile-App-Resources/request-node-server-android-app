@@ -14,7 +14,6 @@ import com.maraujo.requestproject.sync.listeners.BaseProxyListener;
 import com.maraujo.requestproject.sync.requests.toolbox.MultiPartProgressItem;
 import com.maraujo.requestproject.sync.result.Outcome;
 import com.maraujo.requestproject.utils.FileUtils;
-import com.maraujo.requestproject.utils.LogUtils;
 
 import java.io.File;
 import java.io.InputStream;

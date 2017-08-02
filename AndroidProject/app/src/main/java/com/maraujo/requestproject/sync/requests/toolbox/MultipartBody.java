@@ -283,12 +283,16 @@ public final class MultipartBody {
             final String boundary,
             final Charset charset) {
         final StringBuilder buffer = new StringBuilder();
-        buffer.append("multipart/form-data; boundary=");
-        buffer.append(boundary);
+        buffer.append("multipart/form-data; ");
+
         if (charset != null) {
             buffer.append("; charset=");
             buffer.append(charset.name());
+            buffer.append("; ");
         }
+
+        buffer.append("boundary=");
+        buffer.append(boundary);
         return buffer.toString();
     }
 }

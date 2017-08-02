@@ -31,33 +31,28 @@ public class MultipartBodyOutputStream {
         DataOutputStream dos = new DataOutputStream(out);
 
         Set<Entry<String, DataPart>> filesEntries = body.getParts().entrySet();
-        boolean fileFistTime = true;
         for (Entry<String, DataPart> entry : filesEntries) {
             String fileMultipartName = entry.getKey();
             DataPart value = entry.getValue();
 
-            buildPart(dos, fileMultipartName, value, fileFistTime);
-            fileFistTime = false;
+            buildPart(dos, fileMultipartName, value);
         }
 
         Set<Entry<String, TextPart>> textEntries = body.getTextParts().entrySet();
-        boolean textFistTime = true;
         for (Entry<String, TextPart> entry : textEntries) {
             String textMultipartName = entry.getKey();
             TextPart value = entry.getValue();
 
-            buildTextPart(dos, textMultipartName, value, textFistTime);
-            textFistTime = false;
+            buildTextPart(dos, textMultipartName, value);
 
         }
 
-        dos.writeBytes(body.getEndLine());
         dos.writeBytes(body.getHyphens() + body.getBoundary() + body.getHyphens() + body.getEndLine());
 
     }
 
 
-    private void buildTextPart(DataOutputStream dataOutputStream, String textMultipartName, TextPart part, boolean firstTime) throws IOException {
+    private void buildTextPart(DataOutputStream dataOutputStream, String textMultipartName, TextPart part) throws IOException {
 
         dataOutputStream.writeBytes(body.getHyphens() + body.getBoundary() + body.getEndLine());
 
@@ -68,7 +63,7 @@ public class MultipartBodyOutputStream {
         dataOutputStream.writeBytes(body.getEndLine());
     }
 
-    private void buildPart(DataOutputStream dataOutputStream, String fileMultipartName, DataPart part, boolean firstTime) throws IOException {
+    private void buildPart(DataOutputStream dataOutputStream, String fileMultipartName, DataPart part) throws IOException {
 
         dataOutputStream.writeBytes(body.getHyphens() + body.getBoundary() + body.getEndLine());
 

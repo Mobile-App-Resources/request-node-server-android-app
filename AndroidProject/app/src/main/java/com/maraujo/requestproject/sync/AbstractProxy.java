@@ -14,7 +14,6 @@ import com.maraujo.requestproject.sync.requests.GsonRequest;
 import com.maraujo.requestproject.sync.requests.MultipartRequest;
 import com.maraujo.requestproject.sync.requests.toolbox.MultipartBody;
 import com.maraujo.requestproject.sync.result.Outcome;
-import com.maraujo.requestproject.utils.LogUtils;
 
 import java.io.File;
 import java.io.IOException;

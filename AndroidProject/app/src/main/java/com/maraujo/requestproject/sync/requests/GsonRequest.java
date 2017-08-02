@@ -1,7 +1,7 @@
 package com.maraujo.requestproject.sync.requests;
 
 
-import android.net.Uri;
+import android.util.Log;
 
 import com.android.volley.AuthFailureError;
 import com.android.volley.DefaultRetryPolicy;
@@ -12,7 +12,6 @@ import com.android.volley.Response;
 import com.android.volley.toolbox.HttpHeaderParser;
 import com.google.gson.JsonSyntaxException;
 import com.maraujo.requestproject.app.App;
-import com.maraujo.requestproject.utils.LogUtils;
 
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Type;
@@ -27,33 +26,47 @@ import java.util.Map;
 public class GsonRequest<T> extends Request<T> {
 
     private static final String TAG = GsonRequest.class.getSimpleName();
-    private static final int DEFAULT_TIMEOUT_MS = 60 * 2 * 1000;
+    protected static final int DEFAULT_TIMEOUT_MS = (int) (0.5 * 60 * 1000);// min * seg * ms = mil
+    protected static final int DEFAULT_RETRIES = 2;
 
     private final Type type;
     private final Response.Listener<T> listener;
     private final Object body;
     private final Map<String, String> params;
 
-    public GsonRequest(int method, String url, Class<T> clazz, Map<String, String> params, Object body, Response.Listener<T> listener, Response.ErrorListener errorListener) {
+    public GsonRequest(int method, String url, Class<T> clazz, Map<String, Object> params, Object body, Response.Listener<T> listener, Response.ErrorListener errorListener) {
         super(method, url, errorListener);
 
         this.type = clazz;
-        this.params = params;
+        this.params = getParams(params);
         this.body = body;
         this.listener = listener;
 
-        setRetryPolicy(new DefaultRetryPolicy(GsonRequest.DEFAULT_TIMEOUT_MS, 0, DefaultRetryPolicy.DEFAULT_BACKOFF_MULT));
+        setRetryPolicy(new DefaultRetryPolicy(DEFAULT_TIMEOUT_MS, DEFAULT_RETRIES, DefaultRetryPolicy.DEFAULT_BACKOFF_MULT));
     }
 
-    public GsonRequest(int method, String url, Type clazz, Map<String, String> params, Object body, Response.Listener<T> listener, Response.ErrorListener errorListener) {
+    public GsonRequest(int method, String url, Type clazz, Map<String, Object> params, Object body, Response.Listener<T> listener, Response.ErrorListener errorListener) {
         super(method, url, errorListener);
 
         this.type = clazz;
-        this.params = params;
+        this.params = getParams(params);
         this.body = body;
         this.listener = listener;
 
-        setRetryPolicy(new DefaultRetryPolicy(GsonRequest.DEFAULT_TIMEOUT_MS, 0, DefaultRetryPolicy.DEFAULT_BACKOFF_MULT));
+        setRetryPolicy(new DefaultRetryPolicy(DEFAULT_TIMEOUT_MS, DEFAULT_RETRIES, DefaultRetryPolicy.DEFAULT_BACKOFF_MULT));
+    }
+
+    private Map<String, String> getParams(Map<String, Object> params) {
+
+        if (params != null) {
+            Map<String, String> strParams = new HashMap<>();
+            for(Map.Entry<String, Object> entry : params.entrySet()) {
+                strParams.put(entry.getKey(), String.valueOf(entry.getValue()));
+            }
+            return strParams;
+        }
+
+        return null;
     }
 
     @Override
@@ -61,7 +74,7 @@ public class GsonRequest<T> extends Request<T> {
         String url = super.getUrl();
 
         if (getMethod() != Method.GET && getMethod() != Method.DELETE) {
-            LogUtils.logDebug(TAG, String.format("[%s] %s", getMethodString(getMethod()), url));
+            Log.d(TAG, String.format("[%s] %s", getMethodString(), url));
 
             return url;
         }
@@ -70,7 +83,7 @@ public class GsonRequest<T> extends Request<T> {
             Map<String, String> params = getParams();
 
             if (params == null) {
-                LogUtils.logDebug(TAG, String.format("[%s] %s", getMethodString(getMethod()), url));
+                Log.d(TAG, String.format("[%s] %s", getMethodString(), url));
 
                 return url;
             }
@@ -92,11 +105,11 @@ public class GsonRequest<T> extends Request<T> {
             if (builder.length() > 0) {
                 url = String.format("%s?%s", url, builder.toString());
             }
-        } catch (AuthFailureError authFailureError) {
-            LogUtils.logError(TAG, authFailureError);
+        } catch (AuthFailureError ex) {
+            Log.e(TAG, ex.getLocalizedMessage(), ex);
         }
 
-        LogUtils.logDebug(TAG, String.format("[%s] %s", getMethodString(getMethod()), url));
+        Log.d(TAG, String.format("[%s] %s", getMethodString(), url));
 
         return url;
     }
@@ -105,18 +118,12 @@ public class GsonRequest<T> extends Request<T> {
     protected Map<String, String> getParams() throws AuthFailureError {
         Map<String, String> params = this.params != null ? this.params : super.getParams();
 
-        if (params != null) {
-            LogUtils.logDebug(TAG, params.toString());
-        }
-
         return params;
     }
 
     @Override
     public Map<String, String> getHeaders() throws AuthFailureError {
-        Map<String, String> headers = getDefaultHeaders(getParams(), getMethod());
-
-        LogUtils.logDebug(TAG, headers.toString());
+        Map<String, String> headers = getDefaultHeaders();
 
         return headers;
     }
@@ -124,7 +131,7 @@ public class GsonRequest<T> extends Request<T> {
     @Override
     protected void deliverResponse(T response) {
         if (response != null) {
-            LogUtils.logDebug(TAG, response.toString());
+            Log.d(TAG, response.toString());
         }
 
         listener.onResponse(response);
@@ -133,9 +140,9 @@ public class GsonRequest<T> extends Request<T> {
     @Override
     protected Response<T> parseNetworkResponse(NetworkResponse response) {
         try {
+            //App.getInstance().checkSessionCookie(response.headers); // Check session cookie
             String json = new String(response.data, HttpHeaderParser.parseCharset(response.headers));
 
-            LogUtils.logDebug(TAG, json);
             T parseObject = App.getInstance().getGson().fromJson(json, this.type);
             return Response.success(parseObject, HttpHeaderParser.parseCacheHeaders(response));
         } catch (UnsupportedEncodingException e) {
@@ -155,7 +162,7 @@ public class GsonRequest<T> extends Request<T> {
         return "application/json";
     }
 
-    private Map<String, String> getDefaultHeaders(Map<String, String> parameters, int method) {
+    private Map<String, String> getDefaultHeaders() {
         HashMap<String, String> headers = new HashMap<>();
         headers.put("Content-Type", getBodyContentType());
         headers.put("Accept", "application/json");
@@ -165,8 +172,8 @@ public class GsonRequest<T> extends Request<T> {
         return headers;
     }
 
-    private String getMethodString(int methodRequest) {
-        switch (methodRequest) {
+    private String getMethodString() {
+        switch (getMethod()) {
             case Request.Method.GET:
                 return "GET";
             case Request.Method.POST:
